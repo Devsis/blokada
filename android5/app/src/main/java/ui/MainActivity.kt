@@ -33,6 +33,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.blokada.R
+import repository.StageRepo
 import service.*
 import ui.home.ActivatedFragment
 import ui.home.FirstTimeFragment
@@ -228,6 +229,7 @@ class MainActivity : LocalizationActivity(), PreferenceFragmentCompat.OnPreferen
     private var lastOnResume = 0L
     override fun onResume() {
         super.onResume()
+        StageRepo.onForeground()
 
         // Avoid multiple consecutive quick onResume events
         if (lastOnResume + 5 * 1000 > now()) return
@@ -246,12 +248,14 @@ class MainActivity : LocalizationActivity(), PreferenceFragmentCompat.OnPreferen
     override fun onPause() {
         Logger.w("MainActivity", "onPause: $this")
         super.onPause()
+        StageRepo.onBackground()
         tunnelVM.goToBackground()
     }
 
     override fun onDestroy() {
         Logger.w("MainActivity", "onDestroy: $this")
         super.onDestroy()
+        StageRepo.onDestroy()
     }
 
     override fun onSupportNavigateUp(): Boolean {

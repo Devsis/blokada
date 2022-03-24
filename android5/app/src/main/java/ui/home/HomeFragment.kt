@@ -19,9 +19,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import model.*
 import org.blokada.R
+import repository.PermsRepo
 import service.AlertDialogService
 import service.EnvironmentService
 import service.UpdateService
@@ -32,6 +34,7 @@ import ui.app
 import ui.settings.SettingsFragmentDirections
 import ui.utils.getColorFromAttr
 import utils.Links
+import utils.Logger
 import utils.withBoldSections
 
 class HomeFragment : Fragment() {
@@ -115,14 +118,20 @@ class HomeFragment : Fragment() {
             powerButton.isEnabled = !s.inProgress
 
             powerButton.setOnClickListener {
-                when {
-                    s.inProgress -> Unit
-                    s.error != null -> Unit
-                    s.active -> {
-                        vm.turnOff()
-                        adsCounterVm.roll()
+//                when {
+//                    s.inProgress -> Unit
+//                    s.error != null -> Unit
+//                    s.active -> {
+//                        vm.turnOff()
+//                        adsCounterVm.roll()
+//                    }
+//                    else -> vm.turnOn()
+//                }
+                lifecycleScope.launch {
+                    PermsRepo.displayDnsProfilePermsInstructions()
+                    .collect {
+                        Logger.v("Main", "Dialog donea: $it")
                     }
-                    else -> vm.turnOn()
                 }
             }
 
