@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import model.*
 import org.blokada.R
 import repository.PermsRepo
+import repository.Repos
 import service.AlertDialogService
 import service.EnvironmentService
 import service.UpdateService
@@ -128,10 +129,8 @@ class HomeFragment : Fragment() {
 //                    else -> vm.turnOn()
 //                }
                 lifecycleScope.launch {
-                    PermsRepo.displayDnsProfilePermsInstructions()
-                    .collect {
-                        Logger.v("Main", "Dialog donea: $it")
-                    }
+                    Repos.perms.askForAllMissingPermissions()
+                        Logger.v("Main", "Flow done: $it")
                 }
             }
 

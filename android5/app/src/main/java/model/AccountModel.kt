@@ -10,21 +10,16 @@
  * @author Karol Gusak (karol@blocka.net)
  */
 
-package service
+package model
 
-object PrivateDnsService {
+enum class AccountType {
+    Libre, Cloud, Plus
+}
 
-    private val connectivity = ConnectivityService
-    private var currentPrivateDns: String? = null
-
-    init {
-        connectivity.onPrivateDnsChanged = {
-            currentPrivateDns = it
-        }
+fun String?.toAccountType(): AccountType {
+    return when (this) {
+        "cloud" -> AccountType.Cloud
+        "plus" -> AccountType.Plus
+        else -> AccountType.Libre
     }
-
-    fun isPrivateDnsProfileActive(dns: String): Boolean {
-        return currentPrivateDns == dns
-    }
-
 }

@@ -28,6 +28,7 @@ import engine.FilteringService
 import model.BlockaConfig
 import repository.CloudRepo
 import repository.PermsRepo
+import repository.Repos
 import repository.StageRepo
 import service.*
 import ui.advanced.packs.PacksViewModel
@@ -60,20 +61,13 @@ class MainApplication: LocalizationApplication(), ViewModelStoreOwner {
 
     override fun onCreate() {
         super.onCreate()
-
         ContextService.setApp(this)
         LogService.setup()
-
-        PermsRepo.start()
-        CloudRepo.start()
-
         LegacyAccountImport.setup()
         DozeService.setup(this)
-
         setupEvents()
         MonitorService.setup(settingsVM.getUseForegroundService())
-        StageRepo.onCreate()
-
+        Repos.start()
     }
 
     private fun setupEvents() {

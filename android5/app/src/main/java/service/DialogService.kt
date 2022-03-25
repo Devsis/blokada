@@ -35,6 +35,7 @@ object DialogService {
             if (displayedDialog != null) {
                 Logger.w("Dialog", "Ignoring new dialog request, one is already being displayed")
                 trySendBlocking(false)
+                channel.close()
             } else {
                 val ctx = context.requireContext()
                 val builder = AlertDialog.Builder(ctx)
@@ -44,16 +45,15 @@ object DialogService {
                 builder.setPositiveButton(okText) { dialog, _ ->
                     dismiss()
                     okAction()
-                    trySendBlocking(true)
                 }
                 builder.setNeutralButton(ctx.getString(R.string.universal_action_close)) { dialog, _ ->
                     dismiss()
-                    trySendBlocking(false)
                 }
 
                 builder.setOnDismissListener {
                     dismiss(it)
-                    trySendBlocking(false)
+                    trySendBlocking(true)
+                    channel.close()
                 }
 
                 displayedDialog = builder.showButNotCrash()

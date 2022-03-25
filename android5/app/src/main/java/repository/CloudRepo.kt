@@ -16,51 +16,80 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import model.DevicePayload
+import model.Granted
 import service.BlockaApiForCurrentUserService
+import service.ConnectivityService
 import service.EnvironmentService
-import service.PrivateDnsService
 import utils.Logger
 
-object CloudRepo {
+class CloudRepo {
 
-    private val dnsPerms = PrivateDnsService
     private val env = EnvironmentService
     private val api = BlockaApiForCurrentUserService
+    private val connectivity = ConnectivityService
 
-    private val enteredForegroundHot = StageRepo.enteredForegroundHot
+    private val enteredForegroundHot = Repos.stage.enteredForegroundHot
+    private val accountIdHot = Repos.account.accountIdHot
 
     private val writeDeviceInfo = MutableStateFlow<DevicePayload?>(null)
+    private val writeDnsProfileActivated = MutableStateFlow<Granted?>(null)
+    private val writePrivateDnsSetting = MutableStateFlow<String?>(null)
 
     val deviceInfoHot = writeDeviceInfo.filterNotNull().distinctUntilChanged()
 
-    val dnsStringHot = deviceInfoHot.map {
+    val expectedDnsStringHot = deviceInfoHot.map {
         // TODO: better sanitize device name
         val deviceName = env.getDeviceAlias().replace(" ", "--")
         val tag = it.device_tag
-        Logger.e("xxxx", "setting up device tag")
         "$deviceName-$tag.cloud.blokada.org"
     }
 
-    val dnsProfileActivatedHot = dnsStringHot.map {
-        Logger.e("xxxx", "comparing dsn prifol")
-        dnsPerms.isPrivateDnsProfileActive(it)
-    }
+    val dnsProfileActivatedHot = writeDnsProfileActivated.filterNotNull().distinctUntilChanged()
 
     fun start() {
         GlobalScope.launch { onForeground_refreshDeviceInfo() }
+        GlobalScope.launch { onAccountIdChanged_refreshDeviceInfo() }
+        GlobalScope.launch { onPrivateDnsProfileChanged_update() }
+        GlobalScope.launch { printDnsProfAct() }
+        onPrivateDnsSettingChanged_update()
     }
 
     private suspend fun onForeground_refreshDeviceInfo() {
-        Logger.v("Sol", "setting up enter foreground")
         enteredForegroundHot
         .collect {
-            Logger.v("Sel", "got foregroudn: $it")
             onRefreshDeviceInfo()
         }
     }
 
+    private suspend fun onAccountIdChanged_refreshDeviceInfo() {
+        accountIdHot
+        .collect {
+            onRefreshDeviceInfo()
+        }
+    }
+
+    private suspend fun onPrivateDnsProfileChanged_update() {
+        expectedDnsStringHot
+        .combine(writePrivateDnsSetting) { setting, expected -> setting == expected }
+        .collect { writeDnsProfileActivated.value = it }
+    }
+
+    private fun onPrivateDnsSettingChanged_update() {
+        connectivity.onPrivateDnsChanged = {
+            Logger.w("xxxx", "Received priv dns: $it")
+            writePrivateDnsSetting.value = it
+        }
+    }
+
+    // TODO: task with debounce
     private suspend fun onRefreshDeviceInfo() {
         writeDeviceInfo.value = api.getDeviceForCurrentUser()
     }
 
+    private suspend fun printDnsProfAct() {
+        dnsProfileActivatedHot
+            .collect {
+                Logger.w("xxxx", "Dns pro: $it")
+            }
+    }
 }

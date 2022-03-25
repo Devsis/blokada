@@ -19,7 +19,7 @@ import model.Account
 import model.AppStage
 import utils.Logger
 
-object StageRepo {
+class StageRepo {
 
     private val writeStage = MutableStateFlow<AppStage?>(null)
 
@@ -40,7 +40,11 @@ object StageRepo {
         .debounce(1)
         .map { true }
 
-    fun onCreate() {
+    fun start() {
+        onCreate()
+    }
+
+    private fun onCreate() {
         writeStage.value = AppStage.Creating
     }
 

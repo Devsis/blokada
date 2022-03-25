@@ -16,23 +16,19 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asFlow
 import kotlinx.coroutines.flow.first
 import model.DevicePayload
+import repository.AccountRepo
+import repository.Repos
 import ui.AccountViewModel
 import ui.MainApplication
 
 object BlockaApiForCurrentUserService {
 
-    private val context = ContextService
     private val api = BlockaApiService
 
-    // TODO: This a hacky temporary way, it should be AccountRepo, maybe broke BackupAgent
-    private val accountVm by lazy {
-        val app = context.requireApp() as MainApplication
-        ViewModelProvider(app).get(AccountViewModel::class.java)
-    }
+    private val accountIdHot = Repos.account.accountIdHot
 
     suspend fun getDeviceForCurrentUser(): DevicePayload {
-        val account = accountVm.account.asFlow().first()
-        return api.getDevice(account.id)
+        return api.getDevice(accountIdHot.first())
     }
 
 }
